@@ -1,4 +1,3 @@
-// HomeMap.jsx
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -19,7 +18,7 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const database = getDatabase(firebaseApp);
 
-const HomeMap = () => {
+const HomeMap = ({ drive }) => {
   const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
@@ -31,7 +30,7 @@ const HomeMap = () => {
             setUserLocation({ latitude, longitude });
 
             // Update Firebase with the new location
-            updateFirebaseLocation(latitude, longitude);
+            updateFirebaseLocation(latitude, longitude, drive);
             console.log("updated the location in firebase")
           },
           (error) => {
@@ -44,13 +43,11 @@ const HomeMap = () => {
     };
 
     getUserLocation();
-  }, []);
+  }, [drive]);
 
-  const updateFirebaseLocation = (latitude, longitude) => {
-    const driverName = 'Driver_route_annanur';
-    
-    // Update the location in Firebase
-    set(ref(database, `drivers/${driverName}`), {
+  const updateFirebaseLocation = (latitude, longitude, drive) => {
+    // Update the location in Firebase based on the drive prop
+    set(ref(database, `drivers/${drive}`), {
       latitude,
       longitude,
     });
@@ -59,8 +56,8 @@ const HomeMap = () => {
   const busMarkerIcon = L.icon({
     iconUrl: BusPointer,
     iconSize: [50, 50],
-    iconAnchor: [25, 50], // Center the icon on the marker
-    popupAnchor: [0, -50], // Show the popup above the marker
+    iconAnchor: [25, 50],
+    popupAnchor: [0, -50],
   });
 
   return (
