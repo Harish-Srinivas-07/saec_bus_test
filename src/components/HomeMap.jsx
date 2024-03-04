@@ -46,7 +46,6 @@ const HomeMap = ({ drive }) => {
   }, [drive]);
 
   const updateFirebaseLocation = (latitude, longitude, drive) => {
-    // Update the location in Firebase based on the drive prop
     set(ref(database, `drivers/${drive}`), {
       latitude,
       longitude,

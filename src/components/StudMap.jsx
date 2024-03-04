@@ -5,7 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet'; // Import Leaflet library
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue } from 'firebase/database';
-import { BusDot, BusPointer, CurrentLocationMarker } from '../assets/images'; // Import your marker images
+import { BusDot, BusPointer, BusStopIcon, CurrentLocationMarker } from '../assets/images'; // Import your marker images
+import markersData from '../constant';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBKbLiASJslrnWe-tqVPZ0YDygFmUJwKWs",
@@ -17,6 +18,7 @@ const firebaseConfig = {
   appId: "1:623748477674:web:5c8e89eea337792af81d93"
 };
 
+
 const firebaseApp = initializeApp(firebaseConfig);
 const database = getDatabase(firebaseApp);
 
@@ -26,10 +28,8 @@ const StudMap = () => {
     latitude: 0,
     longitude: 0,
   });
-  const [nearestDriver, setNearestDriver] = useState(null);
 
   useEffect(() => {
-    // Set up Firebase listener to get updates on all drivers' locations
     const driversRef = ref(database, 'drivers');
     const unsubscribe = onValue(driversRef, (snapshot) => {
       const locations = snapshot.val();
@@ -37,16 +37,11 @@ const StudMap = () => {
       console.log("stud: get all drivers' locations from firebase");
     });
 
-    // Set up geolocation to get the user's location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ latitude, longitude });
-
-          // Find the nearest driver
-          const nearest = findNearestDriver({ latitude, longitude });
-          setNearestDriver(nearest);
         },
         (error) => {
           console.error('Error getting user location:', error);
@@ -57,62 +52,29 @@ const StudMap = () => {
     }
 
     return () => {
-      // Remove the Firebase listener when the component unmounts
       unsubscribe();
     };
   }, []);
 
   const busMarkerIcon = L.icon({
-    iconUrl: BusDot, // Replace with the actual path to your bus icon
-    iconSize: [50, 50],
-    iconAnchor: [25, 50],
-    popupAnchor: [0, -50],
+    iconUrl: BusDot,
+    iconSize: [30, 30],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10],
   });
 
   const currentLocationMarkerIcon = L.icon({
-    iconUrl: CurrentLocationMarker, // Replace with the actual path to your current location marker icon
+    iconUrl: CurrentLocationMarker,
     iconSize: [20, 20],
-    iconAnchor: [25, 50],
-    popupAnchor: [0, -50],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10],
   });
-
-  const findNearestDriver = (userLocation) => {
-    let nearestDriver = null;
-    let minDistance = Number.MAX_VALUE;
-
-    Object.keys(driversLocation).forEach((driverName) => {
-      const driverLocation = driversLocation[driverName];
-      const distance = calculateDistance(userLocation, driverLocation);
-
-      if (distance < minDistance) {
-        nearestDriver = driverName;
-        minDistance = distance;
-      }
-    });
-
-    return nearestDriver;
-  };
-
-  const calculateDistance = (point1, point2) => {
-    const lat1 = point1.latitude;
-    const lon1 = point1.longitude;
-    const lat2 = point2.latitude;
-    const lon2 = point2.longitude;
-
-    const R = 6371; // Radius of the earth in km
-    const dLat = deg2rad(lat2 - lat1);
-    const dLon = deg2rad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in km
-    return distance;
-  };
-
-  const deg2rad = (deg) => {
-    return deg * (Math.PI / 180);
-  };
+  const BusStopMarker = L.icon({
+    iconUrl: BusStopIcon,
+    iconSize: [25, 25],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10],
+  });
 
   return (
     <div className="py-20 flex-1 h-full bg-transparent">
@@ -132,18 +94,15 @@ const StudMap = () => {
           >
             <Popup>Your Current Location</Popup>
           </Marker>
-          {nearestDriver && (
-            <Polyline
-              positions={[
-                [userLocation.latitude, userLocation.longitude],
-                [
-                  driversLocation[nearestDriver].latitude,
-                  driversLocation[nearestDriver].longitude,
-                ],
-              ]}
-              color="blue"
-            />
-          )}
+          {markersData.map((marker) => (
+            <Marker
+              key={marker.name}
+              position={[marker.lat, marker.long]}
+              icon={BusStopMarker}
+            >
+              <Popup>{marker.name} Bus Stop</Popup>
+            </Marker>
+          ))}
           {Object.keys(driversLocation).map((driverName) => {
             const location = driversLocation[driverName];
             return (
