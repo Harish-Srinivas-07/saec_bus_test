@@ -77,7 +77,7 @@ const StudMap = () => {
   });
 
   return (
-    <div className="py-20 flex-1 h-full bg-transparent">
+    <div className="flex-1 h-full bg-transparent">
       {userLocation.latitude !== 0 && userLocation.longitude !== 0 && (
         <MapContainer
           center={[userLocation.latitude, userLocation.longitude]}
